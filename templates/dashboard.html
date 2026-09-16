@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Dashboard • Rummy Royale{% endblock %}
+{% block content %}
+<div class="page-head">
+  <div>
+    <div class="eyebrow">WELCOME BACK</div>
+    <h1>{{ session['username'] }}'s <span>Rummy Room</span></h1>
+    <p>Start a match or check who has been collecting the crowns.</p>
+  </div>
+  <a class="primary" href="{{ url_for('new_match') }}">＋ New Match</a>
+</div>
+
+<div class="dashboard-grid">
+  <section class="panel leaderboard">
+    <div class="panel-head"><h2>🏆 Leaderboard</h2><span>All-time wins</span></div>
+    {% if leaderboard %}
+      <div class="leader-list">
+      {% for row in leaderboard %}
+        <div class="leader-row">
+          <div class="rank">{{ loop.index }}</div>
+          <div class="avatar">{{ row['name'][0]|upper }}</div>
+          <div class="leader-name">{{ row['name'] }}{% if row['wins'] >= 2 %} <span class="crown">👑</span>{% endif %}</div>
+          <div class="wins">{{ row['wins'] }} win{{ '' if row['wins']==1 else 's' }}</div>
+        </div>
+      {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty">No completed matches yet.<br>Win your first one! 👑</div>
+    {% endif %}
+  </section>
+
+  <section class="panel">
+    <div class="panel-head"><h2>🎴 Match History</h2><span>Latest 12</span></div>
+    {% if matches %}
+    <div class="match-list">
+      {% for m in matches %}
+      <a class="match-item" href="{{ url_for('game', match_id=m['id']) }}">
+        <div>
+          <strong>Match #{{ matches|length - loop.index0 }}</strong>
+          <small>{{ m['created_at'][:10] }} · Target {{ m['set_score'] }}</small>
+        </div>
+        <div class="match-result">
+          {% if m['status']=='finished' %}<b>👑 {{ m['winner_player'] }}</b>{% else %}<span>LIVE</span>{% endif %}
+          <i>›</i>
+        </div>
+      </a>
+      {% endfor %}
+    </div>
+    {% else %}
+      <div class="empty">Your first match is waiting. 🎉</div>
+    {% endif %}
+  </section>
+</div>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}New Match • Rummy Royale{% endblock %}
+{% block content %}
+<div class="form-page">
+  <div class="page-head compact">
+    <div><div class="eyebrow">LET'S PLAY</div><h1>Set up a <span>new match</span></h1></div>
+  </div>
+  <form method="post" class="setup-card">
+    <div class="setup-top">
+      <div class="field">
+        <label>Number of players</label>
+        <select id="playerCount" onchange="renderPlayers()">
+          <option value="2">2 players</option><option value="3" selected>3 players</option>
+          <option value="4">4 players</option><option value="5">5 players</option><option value="6">6 players</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Base losing score</label>
+        <input id="baseScore" type="number" value="200" min="1" oninput="updateTarget()">
+      </div>
+      <div class="field">
+        <label>Open card value</label>
+        <input id="openCard" name="open_card_value" type="number" value="0" min="0" max="54" oninput="updateTarget()">
+      </div>
+      <div class="target-box">
+        <span>SET TARGET</span><strong id="targetPreview">200</strong>
+        <small>200 + open card</small>
+      </div>
+      <input type="hidden" name="set_score" id="setScore">
+    </div>
+    <div class="rule-note">💡 The app eliminates a player automatically when their cumulative losing score reaches or crosses the set target.</div>
+    <h2>Players</h2>
+    <div id="players" class="player-inputs"></div>
+    <button class="primary big" type="submit">Create Match →</button>
+  </form>
+</div>
+<script>
+function renderPlayers(){
+  const n=+document.getElementById('playerCount').value, box=document.getElementById('players');
+  const old=[...box.querySelectorAll('input')].map(x=>x.value);
+  box.innerHTML='';
+  for(let i=0;i<n;i++){
+    const d=document.createElement('div'); d.className='player-input';
+    d.innerHTML=`<span class="color-dot" style="--c:${['#FF5C8A','#7C5CFC','#00B8A9','#FFB000','#00A8FF','#FF6B35'][i]}"></span>
+      <span class="player-num">${i+1}</span><input name="player_name" maxlength="40" required placeholder="Player ${i+1}" value="${old[i]||''}">`;
+    box.appendChild(d);
+  }
+}
+function updateTarget(){
+  const base=+document.getElementById('baseScore').value||0, open=+document.getElementById('openCard').value||0;
+  document.getElementById('targetPreview').textContent=base+open;
+  document.getElementById('setScore').value=base+open;
+}
+renderPlayers(); updateTarget();
+</script>
+{% endblock %}

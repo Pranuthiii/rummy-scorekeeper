@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block title %}Match #{{ match_no }} • Rummy Royale{% endblock %}
+{% block content %}
+<div class="game-head">
+  <div>
+    <div class="eyebrow">MATCH #{{ match_no }}</div>
+    <h1>Rummy <span>Scoreboard</span></h1>
+    <p>Target: <b>{{ match['set_score'] }}</b> · Base 200 + open card {{ match['open_card_value'] }}</p>
+  </div>
+  {% if match['status']=='finished' %}
+    <div class="winner-banner">👑 <b>{{ match['winner_player'] }}</b> won this match!</div>
+  {% else %}
+    <span class="live-pill">● LIVE</span>
+  {% endif %}
+</div>
+
+<section class="panel opening">
+  <div class="panel-head"><h2>🃏 Opening draw</h2><span>Highest card decides the opening player</span></div>
+  <form id="openingForm" class="opening-form">
+    <select name="opening_winner">
+      <option value="">Select highest-card player</option>
+      {% for p in players %}<option {% if match['opening_winner']==p['name'] %}selected{% endif %}>{{ p['name'] }}</option>{% endfor %}
+    </select>
+    <button class="secondary" type="submit">Save opening draw</button>
+  </form>
+  <div class="score-formula">Target = 200 + open-card value → <strong>{{ match['set_score'] }}</strong></div>
+</section>
+
+<section class="score-grid">
+{% for p in players %}
+  <div class="player-card {% if p['eliminated'] %}eliminated{% endif %}" style="--player:{{ p['color'] }}">
+    <div class="player-top">
+      <div class="player-avatar">{{ p['name'][0]|upper }}</div>
+      <div><h2>{{ p['name'] }}</h2>{% if p['eliminated'] %}<span class="out-badge">OUT</span>{% endif %}</div>
+    </div>
+    <div class="score-number">{{ p['score'] }}</div>
+    <div class="progress"><i style="width:{{ [100, (p['score']/match['set_score']*100)]|min }}%"></i></div>
+    <div class="score-meta"><span>Current score</span><b>{{ match['set_score']-p['score'] if match['set_score']>p['score'] else 0 }} to elimination</b></div>
+  </div>
+{% endfor %}
+</section>
+
+{% if match['status']!='finished' %}
+<section class="panel round-panel">
+  <div class="panel-head"><div><h2>➕ Add round</h2><span>Enter each player's losing points for this round</span></div></div>
+  <form id="roundForm">
+    <div class="round-inputs">
+      {% for p in players %}
+      <label class="{% if p['eliminated'] %}disabled{% endif %}">
+        <span><i class="tiny-dot" style="--c:{{p['color']}}"></i>{{ p['name'] }}</span>
+        <input name="score_{{ p['id'] }}" type="number" min="0" value="0" {% if p['eliminated'] %}disabled{% endif %}>
+      </label>
+      {% endfor %}
+    </div>
+    <button class="primary big" type="submit">Save Round & Check Eliminations →</button>
+  </form>
+  <div id="notice"></div>
+</section>
+{% endif %}
+
+<section class="panel history">
+  <div class="panel-head"><h2>📋 Round tally</h2><span>Newest first</span></div>
+  {% if rounds %}
+  <div class="table-wrap">
+  <table><thead><tr><th>Round</th>{% for p in players %}<th>{{p['name']}}</th>{% endfor %}</tr></thead>
+  <tbody>
+  {% for r, scores in rounds %}
+    <tr><td><b>R{{r['round_no']}}</b></td>
+    {% set smap = {} %}{% for s in scores %}{% set _ = smap.update({s['name']:s['points']}) %}{% endfor %}
+    {% for p in players %}<td style="color:{{p['color']}}">+{{smap.get(p['name'],0)}}</td>{% endfor %}
+    </tr>
+  {% endfor %}
+  </tbody></table></div>
+  {% else %}<div class="empty">No rounds yet. Enter the first round above. 🃏</div>{% endif %}
+</section>
+
+<div class="danger-zone">
+  <form method="post" action="{{url_for('delete_match', match_id=match['id'])}}" onsubmit="return confirm('Delete this entire match? This cannot be undone.')">
+    <button class="danger">Delete match</button>
+  </form>
+</div>
+
+{% if match['status']=='finished' %}
+<div class="winner-overlay" id="winnerOverlay">
+  <div class="confetti confetti-1"></div><div class="confetti confetti-2"></div>
+  <div class="confetti confetti-3"></div><div class="confetti confetti-4"></div>
+  <div class="winner-modal">
+    <div class="trophy">👑</div>
+    <div class="winner-kicker">THE TABLE HAS SPOKEN</div>
+    <h2>🎉 {{ match['winner_player'] }} WINS! 🎉</h2>
+    <p>{{ match['winner_player'] }} is the <strong>last player standing</strong>.</p>
+    <button class="primary" onclick="document.getElementById('winnerOverlay').remove()">Continue →</button>
+  </div>
+</div>
+{% endif %}
+
+<script>
+const roundForm=document.getElementById('roundForm');
+if(roundForm){
+ roundForm.addEventListener('submit', async e=>{
+   e.preventDefault();
+   const res=await fetch('{{url_for("add_round",match_id=match["id"])}}',{method:'POST',body:new FormData(roundForm)});
+   const data=await res.json();
+   const n=document.getElementById('notice');
+   if(!data.ok){n.className='notice error';n.textContent=data.error;return;}
+   if(data.winner){n.className='notice winner';n.textContent='👑 '+data.winner+' is the final winner! Reloading…';}
+   else if(data.newly_out.length){n.className='notice out';n.textContent='🚫 Out: '+data.newly_out.join(', ')+' · '+data.remaining.length+' player(s) remain. Reloading…';}
+   else {n.className='notice success';n.textContent='Round saved! Reloading…';}
+   setTimeout(()=>location.reload(),900);
+ });
+}
+document.getElementById('openingForm').addEventListener('submit',async e=>{
+ e.preventDefault();
+ const res=await fetch('{{url_for("set_opening",match_id=match["id"])}}',{method:'POST',body:new FormData(e.target)});
+ const d=await res.json();
+ if(d.ok) location.reload(); else alert(d.error);
+});
+</script>
+{% endblock %}

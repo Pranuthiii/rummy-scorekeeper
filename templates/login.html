@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Login • Rummy Royale{% endblock %}
+{% block content %}
+<div class="login-wrap">
+  <section class="login-card">
+    <div class="logo-big">👑</div>
+    <div class="eyebrow">YOUR DAILY SCOREKEEPER</div>
+    <h1>Rummy<br><span>Royale</span></h1>
+    <p class="lead">Keep every round, every score and every winner in one beautiful place.</p>
+    <form method="post">
+      <label>Login name</label>
+      <input name="username" maxlength="40" placeholder="Enter your Login Id" autofocus required>
+      <button class="primary big" type="submit">Enter the game →</button>
+    </form>
+    <div class="mini-note">Your match history and leaderboard are saved automatically.</div>
+  </section>
+  <section class="login-art">
+    <div class="floating-card c1">♠<small>ACE</small></div>
+    <div class="floating-card c2">♥<small>7</small></div>
+    <div class="floating-card c3">♦<small>Q</small></div>
+    <div class="floating-card c4">♣<small>K</small></div>
+    <div class="art-copy">
+      <div class="pill">♛ GAME NIGHT</div>
+      <h2>Play the cards.<br>Track the scores.</h2>
+      <p>Built for quick daily rummy matches with friends and family.</p>
+    </div>
+  </section>
+</div>
+{% endblock %}
